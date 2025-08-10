@@ -1,0 +1,50 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  patient
+  admin
+}
+
+model User {
+  id           String    @id @default(uuid())
+  name         String
+  email        String    @unique
+  passwordHash String    @map("password_hash")
+  role         UserRole  @default(patient)
+  createdAt    DateTime  @default(now()) @map("created_at")
+  bookings     Booking[]
+
+  @@map("users")
+}
+
+model Slot {
+  id        String    @id @default(uuid())
+  startAt   DateTime  @map("start_at")
+  endAt     DateTime  @map("end_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+  booking   Booking?
+
+  @@map("slots")
+}
+
+model Booking {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  slotId    String   @unique @map("slot_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  slot Slot @relation(fields: [slotId], references: [id], onDelete: Cascade)
+
+  @@map("bookings")
+}
